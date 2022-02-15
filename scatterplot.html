@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v6.js"></script>
+
+<!-- Create a div where the graph will take place -->
+<div id="plotArea"></div>
+
+<script>
+
+    // set the dimensions and margins of the graph
+    const margin = {top: 10, right: 30, bottom: 30, left: 60},
+        width = 460 - margin.left - margin.right,
+        height = 450 - margin.top - margin.bottom;
+    
+    // append the svg object to the body of the page
+    const svg = d3.select("#plotArea")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              `translate(${margin.left}, ${margin.top})`);
+    d3.csv('Data_aSMA_EdU_Macrophage_Screens_readouts.csv').then(function(data){
+      data.forEach(function (d) {
+        d.id=d.FeatureIdx
+        d.EdUCellCount=d['Count_Fibroblast(EdUScreen)']
+        d.EduPositiveCount=d['Count_EdUPositive(EdUScreen)']
+        d.RatioEduPositive=d['RatioEduPositive(EdUScreen)']
+        d.MeanIntegratedaSMA=d['Mean_Mean_Cytoplasm_Intensity_IntegratedIntensity_CorrSMA']
+        d.MeanMacrophageCount=d['Mean_Macrophage_count']
+        d.NucleiCountaSMA=d['Nuclei_Count(aSMA)']
+        d.CellCountaSMA=d['Cell_Count(aSMA)']
+   });
+   console.log(data)
+
+    })
+    
+    //Read the data
+    
+    </script>
