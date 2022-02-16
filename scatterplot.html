@@ -17,6 +17,16 @@
         height: 20px;
         font-size:8px;
     }
+    .tip{
+      position: absolute;
+      background-color: white;
+      color: black;
+      border: 1px solid steelblue;
+      visibility: hidden;
+      width:70px;
+      height: 30px;
+      font-size:8px
+    }
 </style>
 
 </style>
@@ -27,8 +37,9 @@
         width = 350 - margin.left - margin.right,
         height = 250 - margin.top - margin.bottom;
   
-  var div = d3.select("#plotarea").append("div").attr("class", "tooltip").style("opacity", 0);
-  
+  // add the box for the tooltip
+  var tip = d3.select('body').append("div").attr("class", "tip");;
+  const round=d3.format(".1f")
   // Create the two drop down menus  
   var groups=['Count_Fibroblast(EdUScreen)','Count_EdUPositive(EdUScreen)','RatioEduPositive(EdUScreen)','Mean_Mean_Cytoplasm_Intensity_IntegratedIntensity_CorrSMA','Mean_Macrophage_count','Nuclei_Count(aSMA)','Cell_Count(aSMA)']
   d3.select('#selectButton').selectAll('myOptions').data(groups).enter().append('option').text(function(d){return d;}).attr('value',function(d){return d;})
@@ -53,40 +64,52 @@
     var featureId=[]
     // To get the right data, we first have to acess every data object and than the parameter 
     data.forEach(function (d) {
-      xData.push(d[select.value]);
-      yData.push(d[select2.value]);
-      featureId.push[d['FeatureIdx']]
+      d.xdata=+d[select.value];
+      d.ydata=+d[select2.value];
+      d.featureid=+d['FeatureIdx']
+      xData.push(+d[select.value])
+      yData.push(+d[select2.value])
       });
-    // calculate the minimal and maximal values in the array
-    let minX=d3.min(xData);
-    let maxX=d3.max(xData);
-    let minY=d3.min(yData);
-    let maxY=d3.max(yData);
- 
+    console.log(data)
     var data_zipped=d3.zip(xData,yData);
-    // TO DO de fout zit nog bij het ophalen van de data aan de hand van de dropdown menus
-    // var xScale = d3.scaleLinear().domain([d3.max(xData),d3.min(xData)]).range([0,width]);
-    // var yScale = d3.scaleLinear().domain([d3.max(yData),d3.min(yData)]).range([height,0]);
-    var xScale = d3.scaleLinear().domain([5,30]).range([0,width]);
-    var yScale = d3.scaleLinear().domain([6,14]).range([height,0]);
+    // Set the x and y scale
+    var xScale = d3.scaleLinear().domain([d3.min(xData),d3.max(xData)]).range([0,width]);
+    var yScale = d3.scaleLinear().domain([d3.min(yData),d3.max(yData)]).range([height,0]);
     // Add the axis to the plot
     var xAxis=svg.append('g').attr("transform", "translate(0," + height + ")").call(d3.axisBottom(xScale));
     var yAxis=svg.append("g").call(d3.axisLeft(yScale));
 
+ 
     // add the scatter points
     var circle = svg.append('g')
                   .selectAll('circle')
-                  .data(data_zipped)
+                  .data(data)
                   .enter()
                   .append('circle')
-                  .attr("cx", function (d) { return xScale(d[0]); } )
-                  .attr("cy", function (d) { return yScale(d[1]); } )
+                  .attr("cx", function (d) { return xScale(d.xdata); } )
+                  .attr("cy", function (d) { return yScale(d.ydata); } )
+                  .attr('id',function(d){return d.featureid})
                   .attr("r", 2)
                   .attr('fill','steelblue')
-                  .attr('stroke','blue')
-                  .attr('stroke-width','0.2px');
-    
+                  .attr('stroke','lightgrey')
+                  .attr('stroke-width','0.2px')
+                  .on("mouseover", function() {
+                      tip.style("display", null);
+                      })
+                  .on("mouseout", function() {
+                      tip.style("display", "none");
+                  })
+                 .on("mousemove", function(d) {
+                    console.log(d)
+                  
+                  tip.style("left", event.pageX + "px")
+                  .style("top", event.pageY + 10 + "px")
+                  .style("visibility", "visible")
+                  .html('Feature ID: '+d.originalTarget.__data__.featureid+'<br>'+'x-value: '+round(d.originalTarget.__data__.xdata,)+'<br>'+'y-value: '+round(d.originalTarget.__data__.ydata))
+                 });
+  
 
+                  
 
     // Update the plot based on the selecion of the dropdown menus
     function update(xGroup,yGroup) {
@@ -94,25 +117,44 @@
       var yData=[]
       // Create new data with the selection?
       data.forEach(function (d) {
-          xData.push(d[xGroup]);
-          yData.push(d[yGroup]);
-          });
+      d.xdata=+d[select.value];
+      d.ydata=+d[select2.value];
+      d.featureid=+d['FeatureIdx']
+      xData.push(+d[select.value])
+      yData.push(+d[select2.value])
+      });
 
       data_zipped=d3.zip(xData,yData)
-      xScale.domain([120,250])
-      xAxis.transition().duration(1).call(d3.axisBottom(xScale))
-
+      xScale.domain([d3.min(xData),d3.max(xData)]);
+      yScale.domain([d3.min(yData),d3.max(yData)]);
+      xAxis.transition().duration(100).call(d3.axisBottom(xScale));
+      yAxis.transition().duration(100).call(d3.axisLeft(yScale));
       // add the new points
        svg.selectAll('circle')
-                  .data(data_zipped)
+                  .data(data)
                   .transition()
                   .duration(300)
-                  .attr("cx", function (d) { return xScale(d[0]); } )
-                  .attr("cy", function (d) { return yScale(d[1]); } )
+                  .attr("cx", function (d) { return xScale(d.xdata); } )
+                  .attr("cy", function (d) { return yScale(d.ydata); } )
                   .attr("r", 2)
-                  .attr('fill','red')
-                  .attr('stroke','blue')
-                  .attr('stroke-width','0.2px');
+                  .attr('id',function(d){return d.featureid})
+                  .attr('fill','steelblue')
+                  .attr('stroke','lightgrey')
+                  .attr('stroke-width','0.2px')
+                  .on("mouseover", function() {
+                      tip.style("display", null);
+                      })
+                  .on("mouseout", function() {
+                      tip.style("display", "none");
+                  })
+                 .on("mousemove", function(d) {
+                    console.log(d)
+                  
+                  tip.style("left", event.pageX + "px")
+                  .style("top", event.pageY + 10 + "px")
+                  .style("visibility", "visible")
+                  .html('Feature ID: '+d.originalTarget.__data__.featureid+'<br>'+'x-value: '+round(d.originalTarget.__data__.xdata,)+'<br>'+'y-value: '+round(d.originalTarget.__data__.ydata))
+                 });
     }
 
 
@@ -122,8 +164,6 @@
         // recover the option that has been chosen
         var selectedOption = d3.select(this).property("value")
         var constantOption = document.getElementById('selectButton2').value
-        console.log(selectedOption)
-        console.log(constantOption)
         // run the updateChart function with this selected option
         update(selectedOption,constantOption)
     })
