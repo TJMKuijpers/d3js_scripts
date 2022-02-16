@@ -2,41 +2,116 @@
 <meta charset="utf-8">
 
 <!-- Load d3.js -->
-<script src="https://d3js.org/d3.v6.js"></script>
+<script src="d3js/d3.js"></script>
 
 <!-- Create a div where the graph will take place -->
+<select id='selectButton'></select>
+<select id='selectButton2'></select>
 <div id="plotArea"></div>
 
 <script>
 
-    // set the dimensions and margins of the graph
-    const margin = {top: 10, right: 30, bottom: 30, left: 60},
+  // set the dimensions and margins of the graph
+  const margin = {top: 10, right: 30, bottom: 30, left: 60},
         width = 460 - margin.left - margin.right,
         height = 450 - margin.top - margin.bottom;
-    
-    // append the svg object to the body of the page
-    const svg = d3.select("#plotArea")
-      .append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-        .attr("transform",
-              `translate(${margin.left}, ${margin.top})`);
-    d3.csv('Data_aSMA_EdU_Macrophage_Screens_readouts.csv').then(function(data){
-      data.forEach(function (d) {
-        d.id=d.FeatureIdx
-        d.EdUCellCount=d['Count_Fibroblast(EdUScreen)']
-        d.EduPositiveCount=d['Count_EdUPositive(EdUScreen)']
-        d.RatioEduPositive=d['RatioEduPositive(EdUScreen)']
-        d.MeanIntegratedaSMA=d['Mean_Mean_Cytoplasm_Intensity_IntegratedIntensity_CorrSMA']
-        d.MeanMacrophageCount=d['Mean_Macrophage_count']
-        d.NucleiCountaSMA=d['Nuclei_Count(aSMA)']
-        d.CellCountaSMA=d['Cell_Count(aSMA)']
-   });
-   console.log(data)
+  var groups=['Count_Fibroblast(EdUScreen)','Count_EdUPositive(EdUScreen)','RatioEduPositive(EdUScreen)','Mean_Mean_Cytoplasm_Intensity_IntegratedIntensity_CorrSMA','Mean_Macrophage_count','Nuclei_Count(aSMA)','Cell_Count(aSMA)']
+  d3.select('#selectButton').selectAll('myOptions').data(groups).enter().append('option').text(function(d){return d;}).attr('value',function(d){return d;})
 
+  d3.select('#selectButton2').selectAll('myOptions')
+    .data(groups).enter().append('option').text(function(d){return d;})
+    .attr('value',function(d){return d;})
+
+
+  // append the svg object to the body of the page
+  const svg = d3.select("#plotArea")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform",`translate(${margin.left}, ${margin.top})`);
+  d3.csv('Data_aSMA_EdU_Macrophage_Screens_readouts.csv').then(function(data){
+    var select=document.getElementById('selectButton');
+    var select2=document.getElementById('selectButton2')
+    var xData=[]
+    var yData=[]
+    // To get the right data, we first have to acess every data object and than the parameter 
+    data.forEach(function (d) {
+      xData.push(d[select.value]);
+      yData.push(d[select2.value]);
+      });
+    // calculate the minimal and maximal values in the array
+    let minX=d3.min(xData);
+    let maxX=d3.max(xData);
+    let minY=d3.min(yData);
+    let maxY=d3.max(yData);
+ 
+    var data_zipped=d3.zip(xData,yData);
+    // TO DO de fout zit nog bij het ophalen van de data aan de hand van de dropdown menus
+    // var xScale = d3.scaleLinear().domain([d3.max(xData),d3.min(xData)]).range([0,width]);
+    // var yScale = d3.scaleLinear().domain([d3.max(yData),d3.min(yData)]).range([height,0]);
+    var xScale = d3.scaleLinear().domain([5,35]).range([0,width]);
+    var yScale = d3.scaleLinear().domain([5,35]).range([height,0]);
+
+    // Add the axis to the plot
+    svg.append('g').attr("transform", "translate(0," + height + ")").call(d3.axisBottom(xScale));
+    svg.append("g").call(d3.axisLeft(yScale));
+
+    // add the scatter points
+    var circle = svg.append('g')
+                  .selectAll('dot')
+                  .data(data_zipped)
+                  .enter()
+                  .append('circle')
+                  .attr("cx", function (d) { return xScale(d[0]); } )
+                  .attr("cy", function (d) { return yScale(d[1]); } )
+                  .attr("r", 2)
+                  .attr('fill','steelblue')
+                  .attr('stroke','blue')
+                  .attr('stroke-width','0.2px')
+    
+    
+    // Update the plot based on the selecion of the dropdown menus
+    function update(xGroup,yGroup) {
+      var xData=[]
+      var yData=[]
+      // Create new data with the selection?
+      data.forEach(function (d) {
+          xData.push(d[xGroup]);
+          yData.push(d[yGroup]);
+          });
+      data_to_plot=d3.zip(xData,yData)
+      console.log('Update function called')
+      // add the new line
+      var circle = svg.append('g')
+                  .selectAll('dot')
+                  .data(data_to_plot)
+                  .enter()
+                  .append('circle')
+                  .attr("cx", function (d) { return xScale(d[0]); } )
+                  .attr("cy", function (d) { return yScale(d[1]); } )
+                  .attr("r", 2)
+                  .attr('fill','red')
+                  .attr('stroke','blue')
+                  .attr('stroke-width','0.2px');
+    }
+
+      d3.select("#selectButton").on("change", function(d) {
+        // recover the option that has been chosen
+        var selectedOption = d3.select(this).property("value")
+        var constantOption = document.getElementById('selectButton2').value
+        console.log(selectedOption)
+        console.log(constantOption)
+        // run the updateChart function with this selected option
+        update(selectedOption,constantOption)
     })
-    
-    //Read the data
-    
+    d3.select("#selectButton2").on("change", function(d) {
+        // recover the option that has been chosen
+        var selectedOption = document.getElementById('selectButton').value
+        var constantOption = d3.select(this).property('value');
+        // run the updateChart function with this selected option
+        update(selectedOption,constantOption)
+    })
+
+  })
     </script>
