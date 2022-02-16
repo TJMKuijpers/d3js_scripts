@@ -13,9 +13,9 @@
 <div id="plotArea"></div>
 <style>     
     select {
-        width:150px;
-        height: 20px;
-        font-size:8px;
+        width:450px;
+        height: 150px;
+        font-size:20px;
     }
     .tip{
       position: absolute;
@@ -34,8 +34,8 @@
 
   // set the dimensions and margins of the graph
   const margin = {top: 40, right: 30, bottom: 30, left: 60},
-        width = 350 - margin.left - margin.right,
-        height = 250 - margin.top - margin.bottom;
+        width = 700 - margin.left - margin.right,
+        height = 500 - margin.top - margin.bottom;
   
   // add the box for the tooltip
   var tip = d3.select('body').append("div").attr("class", "tip");;
