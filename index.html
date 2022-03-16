@@ -13,8 +13,8 @@
 <div id="plotArea"></div>
 <style>     
     select {
-        width:180px;
-        height: 15px;
+        width:150px;
+        height: 20px;
         font-size:8px;
     }
     .tip{
@@ -34,14 +34,14 @@
 
   // set the dimensions and margins of the graph
   const margin = {top: 40, right: 30, bottom: 30, left: 60},
-        width = 700 - margin.left - margin.right,
-        height = 500 - margin.top - margin.bottom;
+        width = 350 - margin.left - margin.right,
+        height = 250 - margin.top - margin.bottom;
   
   // add the box for the tooltip
   var tip = d3.select('body').append("div").attr("class", "tip");;
   const round=d3.format(".1f")
   // Create the two drop down menus  
-  var groups=['Count_Fibroblast(EdUScreen)','Count_EdUPositive(EdUScreen)','RatioEduPositive(EdUScreen)','Mean_Mean_Cytoplasm_Intensity_IntegratedIntensity_CorrSMA','Mean_Macrophage_count','Nuclei_Count(aSMA)','Cell_Count(aSMA)']
+  var groups=['Count_Fibroblast(EdUScreen)','Count_EdUPositive(EdUScreen)','RatioEduPositive(EdUScreen)','Mean_Mean_Cytoplasm_Intensity_IntegratedIntensity_CorrSMA','Mean_Macrophage_count','Nuclei_Count(aSMA)','Pattern_AreaOccupied_AreaOccupied_Pattern','Pattern_AreaOccupied_Perimeter_Pattern','Pattern_AreaOccupied_TotalArea_Pattern']
   d3.select('#selectButton').selectAll('myOptions').data(groups).enter().append('option').text(function(d){return d;}).attr('value',function(d){return d;})
 
   d3.select('#selectButton2').selectAll('myOptions')
@@ -56,7 +56,7 @@
                 .attr("height", height + margin.top + margin.bottom)
                 .append("g")
                 .attr("transform",`translate(${margin.left}, ${margin.top})`);
-  d3.csv('Data_aSMA_EdU_Macrophage_Screens_readouts.csv').then(function(data){
+  d3.csv('DataFrame_aSMA_EdU_Macrophage_PatternArea.csv').then(function(data){
     var select=document.getElementById('selectButton');
     var select2=document.getElementById('selectButton2')
     var xData=[]
@@ -70,7 +70,6 @@
       xData.push(+d[select.value])
       yData.push(+d[select2.value])
       });
-    console.log(data)
     var data_zipped=d3.zip(xData,yData);
     // Set the x and y scale
     var xScale = d3.scaleLinear().domain([d3.min(xData),d3.max(xData)]).range([0,width]);
@@ -79,7 +78,6 @@
     var xAxis=svg.append('g').attr("transform", "translate(0," + height + ")").call(d3.axisBottom(xScale));
     var yAxis=svg.append("g").call(d3.axisLeft(yScale));
 
- 
     // add the scatter points
     var circle = svg.append('g')
                   .selectAll('circle')
@@ -89,8 +87,20 @@
                   .attr("cx", function (d) { return xScale(d.xdata); } )
                   .attr("cy", function (d) { return yScale(d.ydata); } )
                   .attr('id',function(d){return d.featureid})
-                  .attr("r", 2)
-                  .attr('fill','steelblue')
+                  .attr("r", function(d,i){
+                    if(d.featureid==2009){
+                      return 3
+                    }else{
+                      return 2
+                    }
+                  })
+                  .attr('fill',function(d,i){
+                    if(d.featureid==2009){
+                      return 'red'
+                    }else{
+                      return 'steelblue'
+                    }
+                  })
                   .attr('stroke','lightgrey')
                   .attr('stroke-width','0.2px')
                   .on("mouseover", function() {
@@ -110,7 +120,7 @@
   
 
                   
-
+              
     // Update the plot based on the selecion of the dropdown menus
     function update(xGroup,yGroup) {
       var xData=[]
@@ -136,9 +146,21 @@
                   .duration(300)
                   .attr("cx", function (d) { return xScale(d.xdata); } )
                   .attr("cy", function (d) { return yScale(d.ydata); } )
-                  .attr("r", 2)
+                  .attr("r", function(d,i){
+                    if(d.featureid==2009){
+                      return 3
+                    }else{
+                      return 2
+                    }
+                  })
                   .attr('id',function(d){return d.featureid})
-                  .attr('fill','steelblue')
+                  .attr('fill',function(d,i){
+                    if(d.featureid==2009){
+                      return 'red'
+                    }else{
+                      return 'steelblue'
+                    }
+                  })
                   .attr('stroke','lightgrey')
                   .attr('stroke-width','0.2px')
                   .on("mouseover", function() {
@@ -155,6 +177,8 @@
                   .style("visibility", "visible")
                   .html('Feature ID: '+d.originalTarget.__data__.featureid+'<br>'+'x-value: '+round(d.originalTarget.__data__.xdata,)+'<br>'+'y-value: '+round(d.originalTarget.__data__.ydata))
                  });
+
+                 d3.select('#2009').style('fill','red');             
     }
 
 
